@@ -1,9 +1,8 @@
 from collections import deque
-from imutils.video import FPS
-from imutils.video import FileVideoStream
 import numpy as np
 import argparse
 import imutils
+import time
 import cv2
 
 ap = argparse.ArgumentParser()
@@ -14,8 +13,8 @@ args = vars(ap.parse_args())
 # define the lower and upper boundaries of the color wanted to be detected
 #  in the HSV color space, then initialize the
 # list of tracked points
-redLower = (161, 100, 100)
-redUpper = (181, 255, 255)
+redLower = (20, 100, 100)
+redUpper = (30, 255, 255)
 pts = deque(maxlen=args["buffer"])
 
 # if a video path was not supplied, grab the reference to the web cam
@@ -26,17 +25,14 @@ if not args.get("video", False):
 else:
     camera = cv2.VideoCapture(args["video"])
 
-#used to measure the fps
-fps = FPS().start()
 
 while True:
     # grab the current frame
     (grabbed, frame) = camera.read()
 
     # if we are viewing a video and we did not grab a frame,
-    # then we have reached the end of the video. Removed "if args.get("video") and not grabbed:" from original
-    if not grabbed:
-        print("video over")
+    # then we have reached the end of the video
+    if args.get("video") and not grabbed:
         break
 
     # resize the frame, blur it, and convert it to the HSV
@@ -89,23 +85,17 @@ while True:
         # otherwise, compute the thickness of the line and
         # draw the connecting lines
         thickness = int(np.sqrt(args["buffer"] / float(i + 1)) * 2.5)
-        cv2.line(frame, pts[i - 1], pts[i], (29, 86, 6), thickness)
+        cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
 
     # show the frame to our screen
     cv2.imshow("Frame", frame)
     cv2.imshow('mask', mask)
-    fps.update()
-    key = cv2.waitKey(25)  # & 0xFF
+    key = cv2.waitKey(1) & 0xFF
 
     # if the 'q' key is pressed, stop the loop
-    #if key == ord("q"):
-        #print("Done with video")
-        #break
+    if key == ord("q"):
+        break
 
 # cleanup the camera and close any open windows
-fps.stop()
-print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
-print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
-
 camera.release()
 cv2.destroyAllWindows()
